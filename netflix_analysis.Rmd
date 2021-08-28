@@ -1,16 +1,17 @@
 ---
-title: "Netflix"
+title: "Film and TV ratings"
 author: "Tom Ilchef"
 date: "21/08/2021"
 output: html_document
 ---
+
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
 
-```{r}
+```{r,message=FALSE,warning=FALSE,echo=FALSE}
 library(ggplot2)
 library(dplyr)
 library(shiny)
@@ -21,16 +22,12 @@ library(ggpubr)
 library(stringr)
 ```
 
-```{r}
+```{r,message=FALSE,warning=FALSE,echo=FALSE}
 df <- "netflix-rotten-tomatoes-metacritic-imdb.csv"%>%read.csv()
 ```
 
 
-FFBC42,D81159,8F2D56,218380,73D2DE
-
-add features 
-4-Oct-07
-```{r}
+```{r,message=FALSE,warning=FALSE,echo=FALSE}
 df <- df %>%
         mutate(Release.Date = as.Date(Release.Date,format="%d-%b-%y")
                , Release.Date = case_when(Release.Date > "2021-08-20" ~ Release.Date%m-% months(1200),TRUE~ Release.Date)
@@ -39,8 +36,8 @@ df <- df %>%
 ```
 
 
-theme
-```{r}
+
+```{r,message=FALSE,warning=FALSE,echo=FALSE}
 theme_aes = function(){
         theme(
                 panel.grid.major = element_blank()
@@ -49,7 +46,7 @@ theme_aes = function(){
                 , axis.title.x = element_blank()
                 , axis.text.x = element_text(color="black")
                 , axis.text.y = element_text(color="black")
-                , plot.background = element_rect(fill="#f0f0f0",color="#f0f0f0")
+                , plot.background = element_rect(fill="#f0f0f0",color="#b4b4b4")
                 , panel.background = element_blank()
                 , axis.line.x = element_line(color="black")
                 , axis.line.y = element_line(color="black")
@@ -57,8 +54,32 @@ theme_aes = function(){
 }
 ```
 
-violin by year
-```{r,fig.width=14,fig.asp=0.5}
+# Relationship between Critic Rating and Revenue, by Decade
+### Among english-language movies, moderate positive correlation between a films critical rating and box office revenue.
+```{r,warning=FALSE,message=FALSE,echo=FALSE,fig.width=9,fig.asp=0.6}
+ggplotly(
+        df %>%
+        filter(!is.na(Boxoffice)&!is.na(Decade))%>%
+        filter(!Decade %in% c("1930","1940","1950","1960")) %>%
+        filter(Languages=="English")%>% 
+        mutate(Boxoffice=Boxoffice/1e6)%>%
+        ggplot(aes(x=IMDb.Score,y=Boxoffice))+
+        geom_point(aes(text=Title),size=2,alpha=0.3,color = "#DB5461")+
+        geom_smooth(method='lm',colour="#3D5467",se=F,alpha=0.5,linetype="dotted",size=0.6)+
+        theme_aes()+
+        facet_wrap(~Decade)+
+        theme_aes()+
+        theme(plot.background = element_rect(fill="#f0f0f0",color="#b4b4b4"))
+        )%>%layout(plot_bgcolor='rgba(0,0,0,0)')
+```
+
+
+# Film rating distribution, over time, by rating site.
+### Little clear consensus between sites, likely reflecting differences in rated populations, and of course the subjectivity of ratings. 
+
+### There does seem to be a broad consensus that films were best in the early 20th century, and begin declining in quality after the 60s, with a possible uptick starting around the 2010's.
+
+```{r,echo=FALSE,message=FALSE,warning=FALSE,fig.width=11,fig.asp=1}
 source("r/violin_rating_by_time.R")
 
 violin_imdb <- violin_rating_by_time(df=df
@@ -81,17 +102,14 @@ violin_rt <- violin_rating_by_time(df=df
                                  ,title="Distribution of Rotten Tomatoes Scores by Decade")
 
 violin <- ggarrange(violin_imdb,violin_hg,violin_mc,violin_rt) +
+        theme_aes()+
         theme(plot.background = element_rect(fill="#f0f0f0",color="#b4b4b4"))
 violin
 ```
 
-```{r,fig.width=14,fig.asp=1}
-ggplotly(df %>%
-        filter(!is.na(Boxoffice)&!is.na(Decade))%>%
-        ggplot(aes(x=Boxoffice,y=IMDb.Score))+
-        geom_point(aes(text=Title),size=2,alpha=0.3,color = "#DB5461")+
-        theme_aes()+
-        facet_wrap(~Decade)+
-        theme_aes()+
-        theme(plot.background = element_rect(fill="#f0f0f0",color="#b4b4b4")))
-```
+
+
+
+
+
+
