@@ -1,0 +1,97 @@
+---
+title: "Netflix"
+author: "Tom Ilchef"
+date: "21/08/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+library(ggplot2)
+library(dplyr)
+library(shiny)
+library(lubridate)
+library(forcats)
+library(plotly)
+library(ggpubr)
+library(stringr)
+```
+
+```{r}
+df <- "netflix-rotten-tomatoes-metacritic-imdb.csv"%>%read.csv()
+```
+
+
+FFBC42,D81159,8F2D56,218380,73D2DE
+
+add features 
+4-Oct-07
+```{r}
+df <- df %>%
+        mutate(Release.Date = as.Date(Release.Date,format="%d-%b-%y")
+               , Release.Date = case_when(Release.Date > "2021-08-20" ~ Release.Date%m-% months(1200),TRUE~ Release.Date)
+               , Decade = year(Release.Date) - year(Release.Date)%%10
+               , Boxoffice= as.numeric(gsub("\\D+", "", Boxoffice))) 
+```
+
+
+theme
+```{r}
+theme_aes = function(){
+        theme(
+                panel.grid.major = element_blank()
+                , panel.grid.minor = element_blank()
+                , axis.title = element_text(color="black")
+                , axis.title.x = element_blank()
+                , axis.text.x = element_text(color="black")
+                , axis.text.y = element_text(color="black")
+                , plot.background = element_rect(fill="#f0f0f0",color="#f0f0f0")
+                , panel.background = element_blank()
+                , axis.line.x = element_line(color="black")
+                , axis.line.y = element_line(color="black")
+        )
+}
+```
+
+violin by year
+```{r,fig.width=14,fig.asp=0.5}
+source("r/violin_rating_by_time.R")
+
+violin_imdb <- violin_rating_by_time(df=df
+                                 ,var="IMDb.Score"
+                                 ,color="#DB5461"
+                                 ,title="Distribution of IMDb Scores by Decade")
+
+violin_hg <- violin_rating_by_time(df=df
+                                 ,var="Hidden.Gem.Score"
+                                 ,color="#3D5467"
+                                 ,title="Distribution of Hidden Gem Scores by Decade")
+
+violin_mc <- violin_rating_by_time(df=df
+                                 ,var="Metacritic.Score"
+                                 ,color="#686963"
+                                 ,title="Distribution of Metacritic Scores by Decade")
+violin_rt <- violin_rating_by_time(df=df
+                                 ,var="Rotten.Tomatoes.Score"
+                                 ,color="#8AA29E"
+                                 ,title="Distribution of Rotten Tomatoes Scores by Decade")
+
+violin <- ggarrange(violin_imdb,violin_hg,violin_mc,violin_rt) +
+        theme(plot.background = element_rect(fill="#f0f0f0",color="#b4b4b4"))
+violin
+```
+
+```{r,fig.width=14,fig.asp=1}
+ggplotly(df %>%
+        filter(!is.na(Boxoffice)&!is.na(Decade))%>%
+        ggplot(aes(x=Boxoffice,y=IMDb.Score))+
+        geom_point(aes(text=Title),size=2,alpha=0.3,color = "#DB5461")+
+        theme_aes()+
+        facet_wrap(~Decade)+
+        theme_aes()+
+        theme(plot.background = element_rect(fill="#f0f0f0",color="#b4b4b4")))
+```
