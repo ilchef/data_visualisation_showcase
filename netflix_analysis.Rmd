@@ -79,7 +79,7 @@ ggplotly(
 
 ### There does seem to be a broad consensus that films were best in the early 20th century, and begin declining in quality after the 60s, with a possible uptick starting around the 2010's.
 
-```{r,echo=FALSE,message=FALSE,warning=FALSE,fig.width=11,fig.asp=1}
+```{r,echo=FALSE,message=FALSE,warning=FALSE,fig.width=11,fig.asp=0.6}
 source("r/violin_rating_by_time.R")
 
 violin_imdb <- violin_rating_by_time(df=df
